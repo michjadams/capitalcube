@@ -94,6 +94,50 @@
       color: #2b6cb0;
       text-decoration: underline;
     }
+
+    .calendar-subscribe {
+      max-width: 600px;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    .subscribe-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 0.5rem;
+    }
+
+    .subscribe-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .subscribe-row input {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #4a5568;
+      background: white;
+      min-width: 0;
+    }
+
+    .subscribe-row button {
+      padding: 0.5rem 1rem;
+      background: #1a202c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .subscribe-row button:hover {
+      background: #2d3748;
+    }
   </style>
 </head>
 <body>
@@ -120,6 +164,19 @@
       <dt>Why</dt>
       <dd>Building a place to consistently draft and support our community fridge.</dd>
     </dl>
+  </div>
+
+  <div class="calendar-subscribe">
+    <p class="subscribe-label">Subscribe to our calendar</p>
+    <div class="subscribe-row">
+      <input id="cal-url" type="text" readonly value="https://export.calendar.online/ics/6599624/081435a50e03ddcbe90d/fridgecube.ics?past_months=3&future_months=36">
+      <button id="copy-btn" onclick="
+        navigator.clipboard.writeText(document.getElementById('cal-url').value).then(() => {
+          this.textContent = 'Copied!';
+          setTimeout(() => this.textContent = 'Copy', 2000);
+        });
+      ">Copy</button>
+    </div>
   </div>
 
   <script>
