@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fridge Cube</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧊</text></svg>">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      gap: 2rem;
+    }
+
+    h1 {
+      font-size: 3rem;
+      color: #1a202c;
+      letter-spacing: -0.02em;
+    }
+
+    a.button {
+      background: #1a202c;
+      color: white;
+      text-decoration: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    a.button:hover {
+      background: #2d3748;
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome To Fridge Cube</h1>
+  <a class="button" href="https://calendar.online/081435a50e03ddcbe90d" target="_blank">See Calendar</a>
+
+  <script>
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999';
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    let W, H, icicles, frosts;
+
+    function setup() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+
+      icicles = [];
+      let x = -10;
+      while (x < W + 60) {
+        const w = 28 + Math.random() * 55;
+        const h = 90 + Math.random() * (H * 0.38);
+        icicles.push({ x, w, h, wobble: (Math.random() - 0.5) * w * 0.25 });
+        x += w * (0.55 + Math.random() * 0.35);
+      }
+
+      frosts = Array.from({ length: 100 }, () => {
+        const side = Math.floor(Math.random() * 4);
+        return {
+          x: side === 1 ? W : side === 3 ? 0 : Math.random() * W,
+          y: side === 0 ? 0 : side === 2 ? H : Math.random() * H,
+          r: 40 + Math.random() * 90,
+          delay: Math.random() * 0.5,
+        };
+      });
+    }
+
+    setup();
+    window.addEventListener('resize', setup);
+
+    let progress = 0, direction = 0, lastTime = null, rafId = null;
+
+    function animate(now) {
+      if (lastTime === null) lastTime = now;
+      progress = Math.max(0, Math.min(1, progress + direction * (now - lastTime) / 8000));
+      lastTime = now;
+      draw();
+      if ((direction === 1 && progress < 1) || (direction === -1 && progress > 0)) {
+        rafId = requestAnimationFrame(animate);
+      } else {
+        rafId = null; lastTime = null;
+        if (progress <= 0) ctx.clearRect(0, 0, W, H);
+      }
+    }
+
+    function startAnimate(dir) {
+      direction = dir;
+      if (!rafId) { lastTime = null; rafId = requestAnimationFrame(animate); }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      if (progress <= 0) return;
+
+      // Frost vignette spreading from edges inward
+      const inner = H * Math.max(0, 0.65 - progress * 0.65);
+      const grad = ctx.createRadialGradient(W / 2, H / 2, inner, W / 2, H / 2, H);
+      grad.addColorStop(0, 'rgba(200,235,255,0)');
+      grad.addColorStop(1, `rgba(210,238,255,${progress * 0.6})`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Frost blobs at edges
+      for (const f of frosts) {
+        const p = Math.max(0, (progress - f.delay) / (1 - f.delay));
+        if (p <= 0) continue;
+        const fg = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * p);
+        fg.addColorStop(0, `rgba(225,243,255,${p * 0.55})`);
+        fg.addColorStop(1, 'rgba(225,243,255,0)');
+        ctx.fillStyle = fg;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r * p, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Ice base strip along the top
+      const baseH = 18 * progress;
+      const baseGrad = ctx.createLinearGradient(0, 0, 0, baseH);
+      baseGrad.addColorStop(0, `rgba(200,235,255,${progress * 0.95})`);
+      baseGrad.addColorStop(1, `rgba(210,240,255,${progress * 0.5})`);
+      ctx.fillStyle = baseGrad;
+      ctx.fillRect(0, 0, W, baseH);
+
+      // Icicles
+      for (const ic of icicles) {
+        const h = ic.h * progress;
+        const tip = ic.x + ic.w / 2 + ic.wobble;
+        const ig = ctx.createLinearGradient(ic.x, 0, ic.x + ic.w, 0);
+        ig.addColorStop(0,   `rgba(175,218,255,${progress * 0.55})`);
+        ig.addColorStop(0.4, `rgba(232,248,255,${progress * 0.92})`);
+        ig.addColorStop(1,   `rgba(175,218,255,${progress * 0.55})`);
+        ctx.beginPath();
+        ctx.moveTo(ic.x, 0);
+        ctx.lineTo(ic.x + ic.w, 0);
+        ctx.lineTo(tip, h);
+        ctx.closePath();
+        ctx.fillStyle = ig;
+        ctx.fill();
+        ctx.strokeStyle = `rgba(140,200,240,${progress * 0.35})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+
+    let idleTimer = null;
+    document.addEventListener('mousemove', () => {
+      clearTimeout(idleTimer);
+      if (progress > 0) startAnimate(-1);
+      idleTimer = setTimeout(() => startAnimate(1), 12000);
+    });
+    idleTimer = setTimeout(() => startAnimate(1), 12000);
+  </script>
+</body>
+</html>
