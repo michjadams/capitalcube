@@ -10,7 +10,10 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      cursor: none !important;
+    }
+
+    @media (pointer: fine) {
+      * { cursor: none !important; }
     }
 
     body {
@@ -120,6 +123,7 @@
   </div>
 
   <script>
+  if (window.matchMedia('(pointer: fine)').matches) {
     let mouseX = innerWidth / 2, mouseY = innerHeight / 2;
 
     const cc = document.createElement('canvas');
@@ -190,6 +194,7 @@
     });
     drawCursor();
     idleTimer = setTimeout(() => setDir(1), 1500);
+  } // pointer: fine only
   </script>
 </body>
 </html>
