@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deck Log — Fridge Cube</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧊</text></svg>">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    @media (pointer: fine) {
+      * { cursor: none !important; }
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 0 1.25rem; }
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      gap: 2rem;
+      padding-top: 3rem;
+      padding-bottom: 3rem;
+    }
+
+    .back-link {
+      align-self: flex-start;
+      margin-left: max(1.25rem, calc((100% - 600px) / 2));
+      font-size: 0.9rem;
+      color: #4a5568;
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      color: #1a202c;
+    }
+
+    h1 {
+      font-size: 3rem;
+      color: #1a202c;
+      letter-spacing: -0.02em;
+    }
+
+    .session {
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .session h2 {
+      font-size: 1.3rem;
+      color: #1a202c;
+      margin-bottom: 1rem;
+      letter-spacing: -0.01em;
+    }
+
+    .deck-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+
+    .deck-placeholder {
+      background: white;
+      border-radius: 10px;
+      aspect-ratio: 3/4;
+      border: 2px dashed #cbd5e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #a0aec0;
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <a class="back-link" href="index.html">← Back</a>
+  <h1>Deck Log</h1>
+
+  <div class="session">
+    <h2>Thursday, June 4th</h2>
+    <div class="deck-grid">
+      <div class="deck-placeholder">Photos coming soon</div>
+    </div>
+  </div>
+
+  <script>
+  if (window.matchMedia('(pointer: fine)').matches) {
+    let mouseX = innerWidth / 2, mouseY = innerHeight / 2;
+
+    const cc = document.createElement('canvas');
+    cc.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10000';
+    document.body.appendChild(cc);
+    const cx2 = cc.getContext('2d');
+    function resizeCC() { cc.width = innerWidth; cc.height = innerHeight; }
+    resizeCC();
+    window.addEventListener('resize', resizeCC);
+    const W = 96;
+    const imgNormal = new Image();
+    const imgFrozen = new Image();
+    imgNormal.onload = () => { document.body.style.cursor = 'none'; drawCursor(); };
+    imgNormal.onerror = () => { document.body.style.cursor = 'auto'; };
+    imgFrozen.onload = drawCursor;
+    imgNormal.src = 'mouse_1.png';
+    imgFrozen.src = 'mouse_2.png';
+
+    let fp = 0, fdir = 0, fraf = null, flast = null;
+    let overLink = false;
+
+    document.addEventListener('mouseover', (e) => {
+      overLink = !!e.target.closest('a, button');
+    });
+    document.addEventListener('mouseout', (e) => {
+      if (!e.relatedTarget || !e.relatedTarget.closest('a, button')) overLink = false;
+    });
+
+    function drawCursor() {
+      cc.width = cc.width;
+      function draw(img, alpha) {
+        if (!img.complete || !img.naturalWidth || alpha <= 0) return;
+        const h = W * (img.naturalHeight / img.naturalWidth);
+        cx2.globalAlpha = alpha;
+        if (overLink) { cx2.shadowColor = '#ffe066'; cx2.shadowBlur = 18; }
+        cx2.drawImage(img, mouseX - W / 2, mouseY - h * 0.12, W, h);
+        cx2.shadowColor = 'transparent'; cx2.shadowBlur = 0;
+        cx2.globalAlpha = 1;
+      }
+      draw(imgNormal, 1 - fp);
+      draw(imgFrozen, fp);
+    }
+
+    function animFreeze(now) {
+      if (flast === null) flast = now;
+      const dt = (now - flast) / 1000;
+      flast = now;
+      fp = Math.max(0, Math.min(1, fp + fdir * dt * (fdir === 1 ? 0.7 : 2)));
+      drawCursor();
+      if ((fdir === 1 && fp < 1) || (fdir === -1 && fp > 0)) {
+        fraf = requestAnimationFrame(animFreeze);
+      } else {
+        fraf = null; flast = null;
+      }
+    }
+
+    function setDir(d) {
+      fdir = d;
+      if (!fraf) { flast = null; fraf = requestAnimationFrame(animFreeze); }
+    }
+
+    let idleTimer = null;
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX; mouseY = e.clientY;
+      clearTimeout(idleTimer);
+      if (fp > 0) setDir(-1); else drawCursor();
+      idleTimer = setTimeout(() => setDir(1), 1500);
+    });
+    drawCursor();
+    idleTimer = setTimeout(() => setDir(1), 1500);
+  } // pointer: fine only
+  </script>
+</body>
+</html>
